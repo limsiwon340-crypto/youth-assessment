@@ -752,6 +752,25 @@ function calcScores() {
 // ══════════════════════════════════════════
 // 결과 렌더링
 // ══════════════════════════════════════════
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbz9nfbl4JIX2JP37CsC3srvjXHSkGQUFEDMOb5Ylbf2odmtrKXDsv34x9lChRfXD0kD/exec';
+
+function sendToSheet(s, level) {
+  const levelLabel = level === 'green' ? '안정' : level === 'amber' ? '주의' : '지원필요';
+  fetch(SHEET_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      scoreA: s.scoreA,
+      scoreB: s.scoreB,
+      scoreC: s.scoreC,
+      total: s.total,
+      pct: s.pct,
+      level: levelLabel
+    })
+  }).catch(() => {});
+}
+
 function showResult() {
   updateProgress(100);
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -765,6 +784,7 @@ function showResult() {
   // 위기 문항 확인 (c5 자기돌봄 + c6 희망 없음 모두 높으면 플래그)
   const crisis = (answers['c6'] >= 2 && answers['c5'] >= 1);
 
+  sendToSheet(s, level);
   renderResultHero(level, s, crisis);
   renderResultBody(level, s, crisis);
 }
