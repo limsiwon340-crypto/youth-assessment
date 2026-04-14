@@ -518,8 +518,26 @@
       <p style="margin-top:10px; color:#718096; font-size:13px">※ 이 검사는 전문적 진단을 대체하지 않습니다. 결과는 도움의 방향을 안내하는 참고 자료입니다.</p>
     </div>
 
-    <button class="btn-primary" onclick="goToSection('A')">검사 시작하기 →</button>
+    <div class="card" style="margin-bottom:16px">
+      <p style="font-size:13px;color:#718096;margin-bottom:14px;letter-spacing:1px;font-weight:500">검사 전 간단히 선택해 주세요</p>
 
+      <p style="font-size:14px;font-weight:500;margin-bottom:10px;color:var(--ink)">학교급</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px">
+        <label class="opt-label" id="grade-중학생"><input type="radio" name="grade" value="중학생" onchange="selectMeta('grade','중학생')"> 중학생</label>
+        <label class="opt-label" id="grade-고등학생"><input type="radio" name="grade" value="고등학생" onchange="selectMeta('grade','고등학생')"> 고등학생</label>
+        <label class="opt-label" id="grade-대학생"><input type="radio" name="grade" value="대학생" onchange="selectMeta('grade','대학생')"> 대학생</label>
+        <label class="opt-label" id="grade-기타"><input type="radio" name="grade" value="기타" onchange="selectMeta('grade','기타')"> 기타</label>
+      </div>
+
+      <p style="font-size:14px;font-weight:500;margin-bottom:10px;color:var(--ink)">성별</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <label class="opt-label" id="gender-남"><input type="radio" name="gender" value="남" onchange="selectMeta('gender','남')"> 남</label>
+        <label class="opt-label" id="gender-여"><input type="radio" name="gender" value="여" onchange="selectMeta('gender','여')"> 여</label>
+        <label class="opt-label" id="gender-응답안함"><input type="radio" name="gender" value="응답안함" onchange="selectMeta('gender','응답안함')"> 응답 안 함</label>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="btn-start" onclick="goToSection('A')" disabled style="opacity:0.35;cursor:not-allowed">학교급과 성별을 선택해 주세요</button>
     <p class="disclaimer">
       본 검사는 교육·정보 목적이며 의료적·심리적 진단이 아닙니다.<br>
       긴급한 위기 상황이라면 청소년전화 <strong>1388</strong>로 바로 연락하세요.
@@ -641,6 +659,22 @@ const sections = {
 // 상태
 // ══════════════════════════════════════════
 const answers = {};
+const meta = { grade: null, gender: null };
+
+function selectMeta(type, val) {
+  meta[type] = val;
+  // 선택 스타일
+  document.querySelectorAll(`[id^="${type}-"]`).forEach(el => el.classList.remove('selected'));
+  document.getElementById(`${type}-${val}`).classList.add('selected');
+  // 둘 다 선택됐으면 버튼 활성화
+  const btn = document.getElementById('btn-start');
+  if (meta.grade && meta.gender) {
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.style.cursor = 'pointer';
+    btn.textContent = '검사 시작하기 →';
+  }
+}
 
 // ══════════════════════════════════════════
 // 렌더링
@@ -749,9 +783,6 @@ function calcScores() {
            pct:  Math.round(total/maxTotal*100) };
 }
 
-// ══════════════════════════════════════════
-// 결과 렌더링
-// ══════════════════════════════════════════
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycbz9nfbl4JIX2JP37CsC3srvjXHSkGQUFEDMOb5Ylbf2odmtrKXDsv34x9lChRfXD0kD/exec';
 
 function sendToSheet(s, level) {
@@ -761,6 +792,8 @@ function sendToSheet(s, level) {
     mode: 'no-cors',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
+      grade: meta.grade || '미응답',
+      gender: meta.gender || '미응답',
       scoreA: s.scoreA,
       scoreB: s.scoreB,
       scoreC: s.scoreC,
@@ -771,6 +804,9 @@ function sendToSheet(s, level) {
   }).catch(() => {});
 }
 
+// ══════════════════════════════════════════
+// 결과 렌더링
+// ══════════════════════════════════════════
 function showResult() {
   updateProgress(100);
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
